@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { AudioLines, BarChart3, Clock, Home, Mic, Settings, X } from 'lucide-react';
 import { AboutView } from './components/AboutView';
 import { ExercisesView } from './components/ExercisesView';
@@ -35,6 +37,21 @@ export default function App() {
   const [, setVoiceTick] = useState(0);
 
   const toastTimerRef = useRef<number>(0);
+  const viewRef = useRef<AppView>(view);
+  const activeSessionRef = useRef<ActiveSession | null>(activeSession);
+  const zoomExIdRef = useRef<string | null>(zoomExId);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
+
+  useEffect(() => {
+    zoomExIdRef.current = zoomExId;
+  }, [zoomExId]);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -80,6 +97,36 @@ export default function App() {
     setView(nextView);
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, []);
+
+  // Android hardware back button handling
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let handlePromise = CapacitorApp.addListener('backButton', () => {
+      if (zoomExIdRef.current) {
+        setZoomExId(null);
+        return;
+      }
+      if (activeSessionRef.current) {
+        setActiveSession(null);
+        return;
+      }
+      const cur = viewRef.current;
+      if (cur === 'tw') {
+        navigate('ex');
+      } else if (cur === 'poetry') {
+        navigate('studio');
+      } else if (cur === 'about') {
+        navigate('set');
+      } else if (cur !== 'home') {
+        navigate('home');
+      } else {
+        CapacitorApp.exitApp();
+      }
+    });
+    return () => {
+      handlePromise.then((h) => h.remove()).catch(() => {});
+    };
+  }, [navigate]);
 
   const startPracticeSession = useCallback(
     (list: SessionStep[], name: string) => {

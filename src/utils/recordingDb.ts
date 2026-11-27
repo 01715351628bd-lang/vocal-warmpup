@@ -1,8 +1,24 @@
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import type { Lang, RecordedTake } from '../types/studio';
 import { tr } from './storage';
 
 const REC_DB = 'vws11_recordings';
 const REC_STORE = 'takes';
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      const commaIdx = result.indexOf(',');
+      resolve(commaIdx >= 0 ? result.slice(commaIdx + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Failed to encode audio'));
+    reader.readAsDataURL(blob);
+  });
+}
 
 function openRecDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -222,25 +238,55 @@ export function triggerBlobDownload(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 2500);
 }
 
+async function saveBlobNatively(blob: Blob, filename: string): Promise<string> {
+  const base64 = await blobToBase64(blob);
+  const relativePath = `VocalWarmupStudio/${filename}`;
+  try {
+    const res = await Filesystem.writeFile({
+      path: relativePath,
+      data: base64,
+      directory: Directory.Documents,
+      recursive: true,
+    });
+    return res.uri;
+  } catch {
+    const res = await Filesystem.writeFile({
+      path: relativePath,
+      data: base64,
+      directory: Directory.External,
+      recursive: true,
+    });
+    return res.uri;
+  }
+}
+
 export async function downloadTakeAsFormat(
   take: RecordedTake,
   format: 'wav' | 'original' = 'wav'
-): Promise<{ filename: string; usedOriginal: boolean }> {
+): Promise<{ filename: string; usedOriginal: boolean; savedUri?: string }> {
   const base = getSafeBaseFilename(take);
+  let targetBlob = take.blob;
+  let ext = getOriginalExtension(take.type);
+  let usedOriginal = true;
+
   if (format === 'wav') {
     try {
-      const wavBlob = await convertBlobToWav(take.blob);
-      const filename = `${base}.wav`;
-      triggerBlobDownload(wavBlob, filename);
-      return { filename, usedOriginal: false };
+      targetBlob = await convertBlobToWav(take.blob);
+      ext = 'wav';
+      usedOriginal = false;
     } catch {
-      // Fallback to original format if browser cannot decode
+      // Fallback to original format if browser/WebView cannot decode
     }
   }
-  const ext = getOriginalExtension(take.type);
+
   const filename = `${base}.${ext}`;
-  triggerBlobDownload(take.blob, filename);
-  return { filename, usedOriginal: true };
+  if (Capacitor.isNativePlatform()) {
+    const savedUri = await saveBlobNatively(targetBlob, filename);
+    return { filename, usedOriginal, savedUri };
+  }
+
+  triggerBlobDownload(targetBlob, filename);
+  return { filename, usedOriginal };
 }
 
 export function buildShareSummaryText(take: RecordedTake, lang: Lang): string {
@@ -259,6 +305,7 @@ export function buildShareSummaryText(take: RecordedTake, lang: Lang): string {
 }
 
 export function canUseNativeFileShare(): boolean {
+  if (Capacitor.isNativePlatform()) return true;
   return typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
 }
 
@@ -281,10 +328,51 @@ export async function shareTakeAudioFile(
   }
 
   const filename = `${base}.${ext}`;
-  const mime = targetBlob.type || (ext === 'wav' ? 'audio/wav' : 'audio/webm');
-  const file = new File([targetBlob], filename, { type: mime });
   const title = take.label || `${tr(lang, 'কণ্ঠ রেকর্ডিং', 'Voice Take')} #${take.id}`;
   const text = buildShareSummaryText(take, lang);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64 = await blobToBase64(targetBlob);
+      const cached = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+      await Share.share({
+        title,
+        text,
+        files: [cached.uri],
+        dialogTitle: tr(lang, 'অডিও ফাইল শেয়ার করুন', 'Share audio recording'),
+      });
+      return {
+        status: 'shared',
+        message: tr(lang, 'অডিও ফাইল সফলভাবে শেয়ার করা হয়েছে!', 'Audio file shared successfully!'),
+      };
+    } catch (err) {
+      const msg = ((err as Error)?.message || '').toLowerCase();
+      if (msg.includes('cancel')) {
+        return {
+          status: 'cancelled',
+          message: tr(lang, 'শেয়ার বাতিল করা হয়েছে', 'Share cancelled'),
+        };
+      }
+      // Fall through to native document save if share chooser is unavailable
+      await saveBlobNatively(targetBlob, filename);
+      return {
+        status: 'downloaded',
+        message: tr(
+          lang,
+          `"${filename}" আপনার ফোনের Documents/VocalWarmupStudio ফোল্ডারে সংরক্ষিত হয়েছে।`,
+          `Saved "${filename}" to Documents/VocalWarmupStudio on your device.`
+        ),
+      };
+    }
+  }
+
+  const mime = targetBlob.type || (ext === 'wav' ? 'audio/wav' : 'audio/webm');
+  const file = new File([targetBlob], filename, { type: mime });
 
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     const supportsFileShare =

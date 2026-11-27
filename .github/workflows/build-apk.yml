@@ -1,0 +1,169 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Optional version name (e.g. 1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-apk:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Node dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build web assets and sync Capacitor Android
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Resolve app version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            RAW_TAG="${GITHUB_REF#refs/tags/}"
+            VER_NAME="${RAW_TAG#v}"
+          elif [ -n "${{ inputs.release_version }}" ]; then
+            VER_NAME="${{ inputs.release_version }}"
+            VER_NAME="${VER_NAME#v}"
+          else
+            VER_NAME="1.0.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "APP_VERSION_NAME=${VER_NAME}" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Configure APK signing
+        env:
+          SECRET_KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SECRET_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SECRET_KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$SECRET_KS_B64" ] && [ -n "$SECRET_KS_PASS" ] && [ -n "$SECRET_KEY_ALIAS" ] && [ -n "$SECRET_KEY_PASS" ]; then
+            echo "$SECRET_KS_B64" | base64 --decode > "${RUNNER_TEMP}/release.jks"
+            echo "ANDROID_KEYSTORE_PATH=${RUNNER_TEMP}/release.jks" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=${SECRET_KS_PASS}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=${SECRET_KEY_ALIAS}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=${SECRET_KEY_PASS}" >> "$GITHUB_ENV"
+            echo "SIGNING_MODE=release" >> "$GITHUB_ENV"
+            echo "Using persistent release signing keystore from GitHub Secrets."
+          else
+            EPHEMERAL_PASS="$(openssl rand -hex 16)"
+            EPHEMERAL_ALIAS="vws-ci-key"
+            keytool -genkeypair -v \
+              -keystore "${RUNNER_TEMP}/ephemeral-ci.jks" \
+              -storepass "${EPHEMERAL_PASS}" \
+              -alias "${EPHEMERAL_ALIAS}" \
+              -keypass "${EPHEMERAL_PASS}" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 3650 \
+              -dname "CN=Vocal Warm-up Studio, OU=CI, O=VocalWarmupStudio, L=Dhaka, C=BD"
+            echo "ANDROID_KEYSTORE_PATH=${RUNNER_TEMP}/ephemeral-ci.jks" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=${EPHEMERAL_PASS}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=${EPHEMERAL_ALIAS}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=${EPHEMERAL_PASS}" >> "$GITHUB_ENV"
+            echo "SIGNING_MODE=ephemeral" >> "$GITHUB_ENV"
+            echo "::warning::Signing secrets (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD) are not configured. Signed with an ephemeral CI key so the APK remains installable; configure GitHub Secrets for persistent release signatures."
+          fi
+
+      - name: Build Android Release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Prepare Release APK artifact
+        run: |
+          APK_SOURCE="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK_SOURCE" ]; then
+            echo "::error::Expected APK not found at $APK_SOURCE"
+            ls -la android/app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          APK_OUT="Vocal-Warm-up-Studio-v${APP_VERSION_NAME}.apk"
+          cp "$APK_SOURCE" "$APK_OUT"
+          echo "APK_FILE=${APK_OUT}" >> "$GITHUB_ENV"
+          rm -f "${RUNNER_TEMP}/release.jks" "${RUNNER_TEMP}/ephemeral-ci.jks"
+
+      - name: Upload APK as GitHub Actions Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vocal-Warm-up-Studio-v${{ env.APP_VERSION_NAME }}-apk
+          path: ${{ env.APK_FILE }}
+          retention-days: 30
+
+      - name: Publish APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          if [ "$SIGNING_MODE" = "release" ]; then
+            SIGNING_NOTE="Signed with the repository's configured release keystore."
+          else
+            SIGNING_NOTE="Signed with an ephemeral CI key (configure GitHub Secrets for persistent updates without reinstalling)."
+          fi
+
+          NOTES_FILE="${RUNNER_TEMP}/release-notes.md"
+          cat <<EOF > "$NOTES_FILE"
+          ## Vocal Warm-up Studio ${TAG_NAME}
+
+          Direct installable Android APK built automatically via GitHub Actions.
+
+          - **Version:** \`${APP_VERSION_NAME}\` (build \`${APP_VERSION_CODE}\`)
+          - **Package ID:** \`com.vocalwarmup.studio\`
+          - **Minimum Android:** Android 7.0+ (tested for Android 12, 13, 14, 15+)
+          - **Signing:** ${SIGNING_NOTE}
+
+          ### How to Install on Android
+          1. Download **\`${APK_FILE}\`** from the **Assets** section below.
+          2. Tap the downloaded \`.apk\` file on your phone.
+          3. Allow **"Install unknown apps"** if prompted by Android, then tap **Install**.
+          EOF
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" "$APK_FILE" --clobber
+            gh release edit "$TAG_NAME" --notes-file "$NOTES_FILE"
+          else
+            gh release create "$TAG_NAME" "$APK_FILE" \
+              --title "Vocal Warm-up Studio ${TAG_NAME}" \
+              --notes-file "$NOTES_FILE"
+          fi
