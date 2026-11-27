@@ -52,6 +52,12 @@ export interface PoetryWord {
   tip: string;
 }
 
+export interface Challenge7Progress {
+  startedAt?: number;
+  doneDays: number[];
+  lastDayCompletedAt?: Record<number, number>;
+}
+
 export interface AppState {
   lang: Lang;
   theme: Theme;
@@ -78,6 +84,7 @@ export interface AppState {
     fav: string[];
     done: Record<string, number>;
   };
+  challenge7?: Challenge7Progress;
 }
 
 export interface RecordedTake {

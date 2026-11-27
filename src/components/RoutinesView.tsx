@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { ArrowUp, Minus, Play, Plus, RotateCcw, X } from 'lucide-react';
 import { CAT_EMOJI, EXERCISES, EX_MAP, ROUTINES, catColor } from '../data/exercises';
-import type { AppState } from '../types/studio';
+import type { AppState, SessionStep, StudioPrefill } from '../types/studio';
 import { formatNum, tr } from '../utils/storage';
+import { Challenge7Card } from './Challenge7Card';
 
 interface RoutinesViewProps {
   state: AppState;
   onUpdateRoutines: (rd: Record<string, [string, number][]>) => void;
   onStartRoutine: (routineId: string) => void;
+  onStartChallengeDay: (dayNum: number, steps: SessionStep[], title: string) => void;
+  onToggleChallengeDay: (dayNum: number) => void;
+  onResetChallenge: () => void;
+  onRecordBaseline: (prefill: StudioPrefill) => void;
   onToast: (msg: string) => void;
 }
 
@@ -15,6 +20,10 @@ export const RoutinesView: React.FC<RoutinesViewProps> = ({
   state,
   onUpdateRoutines,
   onStartRoutine,
+  onStartChallengeDay,
+  onToggleChallengeDay,
+  onResetChallenge,
+  onRecordBaseline,
   onToast,
 }) => {
   const lang = state.lang;
@@ -82,6 +91,14 @@ export const RoutinesView: React.FC<RoutinesViewProps> = ({
           )}
         </p>
       </div>
+
+      <Challenge7Card
+        state={state}
+        onStartDaySession={onStartChallengeDay}
+        onToggleDayDone={onToggleChallengeDay}
+        onResetChallenge={onResetChallenge}
+        onRecordBaseline={onRecordBaseline}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {Object.keys(ROUTINES).map((key) => {

@@ -1,8 +1,9 @@
 import React from 'react';
 import { ChevronRight, Play, RotateCw, ScrollText, Sparkles } from 'lucide-react';
 import { CATS, CAT_EMOJI, QUOTES, ROUTINES, TW } from '../data/exercises';
-import type { AppState, SessionStep } from '../types/studio';
+import type { AppState, SessionStep, StudioPrefill } from '../types/studio';
 import { formatNum, getStreak, todayMin, totalMin, tr } from '../utils/storage';
+import { Challenge7Card } from './Challenge7Card';
 import { VoiceSafetyCard } from './VoiceSafetyCard';
 
 interface HomeViewProps {
@@ -14,6 +15,10 @@ interface HomeViewProps {
   onOpenPoetry: () => void;
   onOpenStudio: () => void;
   onOpenAbout: () => void;
+  onStartChallengeDay: (dayNum: number, steps: SessionStep[], title: string) => void;
+  onToggleChallengeDay: (dayNum: number) => void;
+  onResetChallenge: () => void;
+  onRecordBaseline: (prefill: StudioPrefill) => void;
 }
 
 const DAILY_RING_R = 36;
@@ -28,6 +33,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenPoetry,
   onOpenStudio,
   onOpenAbout,
+  onStartChallengeDay,
+  onToggleChallengeDay,
+  onResetChallenge,
+  onRecordBaseline,
 }) => {
   const lang = state.lang;
   const L = lang === 'bn' ? 0 : 1;
@@ -246,6 +255,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
           })}
         </div>
       </section>
+
+      {/* 7-Day Voice Change Warm-up Challenge */}
+      <Challenge7Card
+        state={state}
+        onStartDaySession={onStartChallengeDay}
+        onToggleDayDone={onToggleChallengeDay}
+        onResetChallenge={onResetChallenge}
+        onRecordBaseline={onRecordBaseline}
+        compact
+      />
 
       {/* Featured Cards: Daily Twister + Sadhana + Poetry Recitation Lab */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">

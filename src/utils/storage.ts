@@ -27,13 +27,25 @@ export function defState(): AppState {
     rd: {},
     last: null,
     tw: { fav: [], done: {} },
+    challenge7: { doneDays: [], lastDayCompletedAt: {} },
   };
 }
 
 export function loadState(): AppState {
   try {
     const fresh = localStorage.getItem(STORAGE_KEY);
-    if (fresh) return { ...defState(), ...(JSON.parse(fresh) || {}) };
+    if (fresh) {
+      const parsed = JSON.parse(fresh) || {};
+      return {
+        ...defState(),
+        ...parsed,
+        challenge7: {
+          doneDays: [],
+          lastDayCompletedAt: {},
+          ...(parsed.challenge7 || {}),
+        },
+      };
+    }
     const old = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (old) return { ...defState(), ...(JSON.parse(old) || {}) };
   } catch {

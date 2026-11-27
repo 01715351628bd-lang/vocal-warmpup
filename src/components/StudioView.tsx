@@ -18,6 +18,7 @@ import {
   Trash2,
   Volume2,
   VolumeX,
+  Wind,
 } from 'lucide-react';
 import { POETRY_SAMPLE_LINE, POETRY_WORDS, TW } from '../data/exercises';
 import type { AppState, PitchReading, RecordedTake, StudioPrefill } from '../types/studio';
@@ -33,6 +34,7 @@ import {
   updateTakeMeta,
 } from '../utils/recordingDb';
 import { formatNum, tr } from '../utils/storage';
+import { BreathingOverlay } from './BreathingOverlay';
 import { ShareTakeModal } from './ShareTakeModal';
 import { VoiceSafetyCard } from './VoiceSafetyCard';
 
@@ -78,6 +80,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
   const [recNote, setRecNote] = useState('');
   const [promptText, setPromptText] = useState(POETRY_SAMPLE_LINE);
   const [tanpuraPreview, setTanpuraPreview] = useState(false);
+  const [breathingOpen, setBreathingOpen] = useState(false);
 
   // Camera state
   const [cameraActive, setCameraActive] = useState(false);
@@ -1523,6 +1526,30 @@ export const StudioView: React.FC<StudioViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating 4-7-8 Breathing Button */}
+      <button
+        type="button"
+        onClick={() => setBreathingOpen(true)}
+        aria-label={tr(lang, '৪-৭-৮ শ্বাস অনুশীলন খুলুন', 'Open 4-7-8 Breathing exercise')}
+        className="fixed right-4 sm:right-6 bottom-[calc(86px+env(safe-area-inset-bottom))] z-30 min-h-[48px] px-4 rounded-full shadow-2xl studio-btn-pri inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold cursor-pointer border border-white/25"
+        style={{
+          background: 'linear-gradient(135deg, #2bbf95, #45b0ff)',
+          color: '#041a14',
+        }}
+      >
+        <Wind className="w-4 h-4" />
+        <span>{tr(lang, 'Breathing · ৪-৭-৮', 'Breathing')}</span>
+      </button>
+
+      {/* 4-7-8 Guided Breathing Overlay */}
+      {breathingOpen && (
+        <BreathingOverlay
+          lang={lang}
+          muted={state.mute}
+          onClose={() => setBreathingOpen(false)}
+        />
       )}
     </div>
   );

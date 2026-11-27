@@ -40,6 +40,7 @@ export default function App() {
   const viewRef = useRef<AppView>(view);
   const activeSessionRef = useRef<ActiveSession | null>(activeSession);
   const zoomExIdRef = useRef<string | null>(zoomExId);
+  const activeChallengeDayRef = useRef<number | null>(null);
 
   useEffect(() => {
     viewRef.current = view;
@@ -138,8 +139,48 @@ export default function App() {
     []
   );
 
+  const handleStartChallengeDay = useCallback(
+    (dayNum: number, steps: SessionStep[], title: string) => {
+      activeChallengeDayRef.current = dayNum;
+      startPracticeSession(steps, title);
+    },
+    [startPracticeSession]
+  );
+
+  const handleToggleChallengeDay = useCallback(
+    (dayNum: number) => {
+      setState((prev) => {
+        const current = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {} };
+        const exists = current.doneDays.includes(dayNum);
+        const nextDays = exists
+          ? current.doneDays.filter((d) => d !== dayNum)
+          : [...current.doneDays, dayNum].sort((a, b) => a - b);
+        const nextTimestamps = { ...(current.lastDayCompletedAt || {}) };
+        if (!exists) nextTimestamps[dayNum] = Date.now();
+        return {
+          ...prev,
+          challenge7: {
+            startedAt: current.startedAt || Date.now(),
+            doneDays: nextDays,
+            lastDayCompletedAt: nextTimestamps,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const handleResetChallenge = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      challenge7: { doneDays: [], lastDayCompletedAt: {} },
+    }));
+    showToast(tr(state.lang, '৭ দিনের চ্যালেঞ্জ রিসেট হয়েছে', '7-day challenge reset'));
+  }, [showToast, state.lang]);
+
   const startRoutineById = useCallback(
     (routineId: string) => {
+      activeChallengeDayRef.current = null;
       const rt = ROUTINES[routineId];
       if (!rt) return;
       const rawSteps = state.rd[routineId] || rt.i;
@@ -156,21 +197,51 @@ export default function App() {
       const minsAdded = Math.round(spentSec / 6) / 10;
       const todayKey = dk();
       const sessionName = activeSession?.name || '';
+      const challengeDay = completed ? activeChallengeDayRef.current : null;
 
-      setState((prev) => ({
-        ...prev,
-        days: {
-          ...prev.days,
-          [todayKey]: Math.round(((prev.days[todayKey] || 0) + minsAdded) * 10) / 10,
-        },
-        hist: [
-          { ts: Date.now(), ids: doneIds, sec: Math.round(spentSec), name: sessionName },
-          ...prev.hist,
-        ].slice(0, 100),
-        sessions: completed ? prev.sessions + 1 : prev.sessions,
-      }));
+      setState((prev) => {
+        let nextChallenge = prev.challenge7;
+        if (challengeDay !== null) {
+          const curC = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {} };
+          const nextDone = curC.doneDays.includes(challengeDay)
+            ? curC.doneDays
+            : [...curC.doneDays, challengeDay].sort((a, b) => a - b);
+          nextChallenge = {
+            startedAt: curC.startedAt || Date.now(),
+            doneDays: nextDone,
+            lastDayCompletedAt: {
+              ...(curC.lastDayCompletedAt || {}),
+              [challengeDay]: Date.now(),
+            },
+          };
+        }
+        return {
+          ...prev,
+          days: {
+            ...prev.days,
+            [todayKey]: Math.round(((prev.days[todayKey] || 0) + minsAdded) * 10) / 10,
+          },
+          hist: [
+            { ts: Date.now(), ids: doneIds, sec: Math.round(spentSec), name: sessionName },
+            ...prev.hist,
+          ].slice(0, 100),
+          sessions: completed ? prev.sessions + 1 : prev.sessions,
+          challenge7: nextChallenge,
+        };
+      });
+
+      if (challengeDay !== null) {
+        activeChallengeDayRef.current = null;
+        showToast(
+          tr(
+            state.lang,
+            `৭ দিনের চ্যালেঞ্জ — দিন ${challengeDay} সম্পন্ন হয়েছে!`,
+            `7-Day Challenge — Day ${challengeDay} complete!`
+          )
+        );
+      }
     },
-    [activeSession]
+    [activeSession, showToast, state.lang]
   );
 
   const handleToggleFav = useCallback((id: string) => {
@@ -256,6 +327,10 @@ export default function App() {
             onOpenPoetry={() => navigate('poetry')}
             onOpenStudio={() => navigate('studio')}
             onOpenAbout={() => navigate('about')}
+            onStartChallengeDay={handleStartChallengeDay}
+            onToggleChallengeDay={handleToggleChallengeDay}
+            onResetChallenge={handleResetChallenge}
+            onRecordBaseline={handleRecordPromptInStudio}
           />
         )}
 
@@ -277,6 +352,10 @@ export default function App() {
             state={state}
             onUpdateRoutines={(rd) => updateState({ rd })}
             onStartRoutine={startRoutineById}
+            onStartChallengeDay={handleStartChallengeDay}
+            onToggleChallengeDay={handleToggleChallengeDay}
+            onResetChallenge={handleResetChallenge}
+            onRecordBaseline={handleRecordPromptInStudio}
             onToast={showToast}
           />
         )}
@@ -366,7 +445,10 @@ export default function App() {
           state={state}
           onUpdateState={updateState}
           onCompleteSession={handleCompleteSession}
-          onClose={() => setActiveSession(null)}
+          onClose={() => {
+            activeChallengeDayRef.current = null;
+            setActiveSession(null);
+          }}
           onToast={showToast}
           onZoomImage={(id) => setZoomExId(id)}
         />
