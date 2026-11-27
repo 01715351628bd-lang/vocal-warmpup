@@ -1,0 +1,6 @@
+{
+  "name": "Vocal Warm-up Studio",
+  "description": "৫০টি কণ্ঠ-কৌশল, কবিতা আবৃত্তি, টাং টুইস্টার, লাইভ পিচ অ্যানালাইজার ও ভয়েস রেকর্ডার-শেয়ারিং স্টুডিও।",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
