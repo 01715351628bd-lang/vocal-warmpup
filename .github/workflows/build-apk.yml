@@ -179,11 +179,22 @@ jobs:
 
           ls -lh build-artifacts/
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v6
+      - name: Upload Debug APK (Direct Download)
+        uses: actions/upload-artifact@v7
         with:
-          name: Vocal-Warm-up-Studio-v${{ env.APP_VERSION_NAME }}-apk
-          path: build-artifacts/*.apk
+          name: Vocal-Warm-up-Studio-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Signed Release APK (Direct Download)
+        if: steps.signing.outputs.has_signing == 'true' && steps.release_verify.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Vocal-Warm-up-Studio-v${{ env.APP_VERSION_NAME }}-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          archive: false
           if-no-files-found: error
           retention-days: 30
 
