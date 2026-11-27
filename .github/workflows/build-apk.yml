@@ -100,7 +100,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Configure and build Signed Release APK (when signing secrets are present)
+      - name: Build Release APK with Gradle
         env:
           SECRET_KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           SECRET_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -113,13 +113,15 @@ jobs:
             export ANDROID_KEYSTORE_PASSWORD="${SECRET_KS_PASS}"
             export ANDROID_KEY_ALIAS="${SECRET_KEY_ALIAS}"
             export ANDROID_KEY_PASSWORD="${SECRET_KEY_PASS}"
-            (cd android && ./gradlew assembleRelease --no-daemon)
-            rm -f "${RUNNER_TEMP}/release.jks"
             echo "HAS_RELEASE_APK=true" >> "$GITHUB_ENV"
           else
             echo "HAS_RELEASE_APK=false" >> "$GITHUB_ENV"
-            echo "Release signing secrets not configured; publishing installable debug APK."
+            echo "Release signing secrets not configured; running unsigned assembleRelease and publishing installable debug APK."
           fi
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          rm -f "${RUNNER_TEMP}/release.jks"
 
       - name: Prepare versioned APK files
         run: |
