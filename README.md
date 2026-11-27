@@ -107,7 +107,7 @@ Go to **GitHub Repository → Settings → Secrets and variables → Actions →
 1. Open your GitHub repository in a browser and click **Releases → Create a new release**.
 2. Click **Choose a tag**, type `v1.0.0`, and select **Create new tag: v1.0.0 on publish**.
 3. Click **Publish release**.
-4. Wait 2–3 minutes for **Actions → Build & Release Android APK** to finish—the signed `Vocal-Warm-up-Studio-v1.0.0.apk` will automatically appear under that release's **Assets**.
+4. Wait 2–3 minutes for **Actions → Build & Release Android APK** to finish—the generated `.apk` (`Vocal-Warm-up-Studio-v1.0.0-debug.apk`, plus `-release.apk` when signing secrets are set) will automatically appear under that release's **Assets**.
 
 ### Option B: Via Git CLI
 ```bash
@@ -116,18 +116,19 @@ git push origin v1.0.0
 ```
 
 ### What the CI Pipeline (`.github/workflows/build-apk.yml`) Does
-1. Sets up **Node.js 22**, **Java 21 (Temurin)**, **Android SDK**, and **Gradle**.
-2. Runs `npm run build` and `npx cap sync android` to bundle the web frontend into Capacitor Android.
-3. Configures release signing from your 4 GitHub Secrets (or generates a one-time ephemeral CI keystore so the APK remains installable when secrets are not yet configured).
-4. Compiles `./gradlew assembleRelease` and uploads `Vocal-Warm-up-Studio-v<version>.apk` as a **GitHub Actions Artifact** (available on `main` pushes, `v*` tag pushes, and manual **Run workflow** triggers).
-5. On `v*` tag pushes, automatically creates/updates the **GitHub Release** with release notes and attaches the `.apk` file using `GITHUB_TOKEN`.
+1. Validates the Gradle Wrapper (`gradle/actions/wrapper-validation@v4`).
+2. Sets up **Node.js 22**, **Java JDK 21 (Temurin)**, **Android SDK** (`platforms;android-36`, `build-tools;36.0.0`, `platform-tools`), and **Gradle dependency caching** (`gradle/actions/setup-gradle@v4`).
+3. Runs `npm run build` and `npx cap sync android` to bundle the web frontend into `android/`.
+4. Runs `./gradlew assembleDebug --no-daemon` to compile an immediately installable APK (`Vocal-Warm-up-Studio-v<version>-debug.apk`), and additionally compiles `./gradlew assembleRelease --no-daemon` if your 4 signing secrets are configured.
+5. Uploads the APK(s) via `actions/upload-artifact@v4` on `main` pushes, `v*` tag pushes, and manual `workflow_dispatch` runs.
+6. On `v*` tag pushes, uses `softprops/action-gh-release@v2` with `GITHUB_TOKEN` to create the **GitHub Release** and attach the versioned APK file(s).
 
 ---
 
 ## 4. Download & Install the APK on Android
 
 1. Open your GitHub repository on your Android phone and tap **Releases** (on the right/bottom of the repo page).
-2. Under **Assets** of the latest release (e.g., `v1.0.0`), tap **`Vocal-Warm-up-Studio-v1.0.0.apk`** to download.
+2. Under **Assets** of the latest release (e.g., `v1.0.0`), tap **`Vocal-Warm-up-Studio-v1.0.0-release.apk`** (if signed secrets were added) or **`Vocal-Warm-up-Studio-v1.0.0-debug.apk`** to download.
 3. Open the downloaded `.apk` from your notifications or Files app.
 4. If Android asks for permission, tap **Settings → Allow from this source** ("Install unknown apps"), then tap **Install**.
 5. Launch **Vocal Warm-up Studio** and grant Microphone/Camera permissions when using the Studio tab.
