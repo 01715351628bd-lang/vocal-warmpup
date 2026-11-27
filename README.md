@@ -103,20 +103,24 @@ Go to **GitHub Repository → Settings → Secrets and variables → Actions →
 
 ## 3. Create Your First GitHub Release (Auto-Builds & Attaches APK)
 
-Push any semantic version tag starting with `v` (for example `v1.0.0`):
+### Option A: Browser-Only (No Terminal Commands Required)
+1. Open your GitHub repository in a browser and click **Releases → Create a new release**.
+2. Click **Choose a tag**, type `v1.0.0`, and select **Create new tag: v1.0.0 on publish**.
+3. Click **Publish release**.
+4. Wait 2–3 minutes for **Actions → Build & Release Android APK** to finish—the signed `Vocal-Warm-up-Studio-v1.0.0.apk` will automatically appear under that release's **Assets**.
 
+### Option B: Via Git CLI
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-GitHub Actions (`.github/workflows/build-apk.yml`) will automatically:
-1. Build the Vite frontend (`npm run build`) and sync Capacitor (`npx cap sync android`).
-2. Compile and sign `Vocal-Warm-up-Studio-v1.0.0.apk` with Java 21 + Android SDK + Gradle.
-3. Upload the `.apk` as a GitHub Actions artifact.
-4. Create a **GitHub Release** for `v1.0.0` and attach **`Vocal-Warm-up-Studio-v1.0.0.apk`** directly under **Assets**.
-
-You can also trigger a manual build anytime via **GitHub → Actions → Build & Release Android APK → Run workflow**.
+### What the CI Pipeline (`.github/workflows/build-apk.yml`) Does
+1. Sets up **Node.js 22**, **Java 21 (Temurin)**, **Android SDK**, and **Gradle**.
+2. Runs `npm run build` and `npx cap sync android` to bundle the web frontend into Capacitor Android.
+3. Configures release signing from your 4 GitHub Secrets (or generates a one-time ephemeral CI keystore so the APK remains installable when secrets are not yet configured).
+4. Compiles `./gradlew assembleRelease` and uploads `Vocal-Warm-up-Studio-v<version>.apk` as a **GitHub Actions Artifact** (available on `main` pushes, `v*` tag pushes, and manual **Run workflow** triggers).
+5. On `v*` tag pushes, automatically creates/updates the **GitHub Release** with release notes and attaches the `.apk` file using `GITHUB_TOKEN`.
 
 ---
 
