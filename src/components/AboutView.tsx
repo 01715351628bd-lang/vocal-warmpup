@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Copy, Phone } from 'lucide-react';
 import { ABOUT_IMG } from '../data/assets';
+import { EXERCISES } from '../data/exercises';
 import type { Lang } from '../types/studio';
 import { formatNum, tr } from '../utils/storage';
 
@@ -16,7 +17,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ lang, onBack, onToast }) =
 
   const features: [string, string, string][] = [
     ['🎙️', tr(lang, 'ভয়েস স্টুডিও', 'Voice Studio'), tr(lang, 'লাইভ পিচ, রেকর্ডার ও শেয়ার', 'Live pitch, recorder & share')],
-    ['🧘', tr(lang, '৫০টি কৌশল', '50 techniques'), tr(lang, 'শ্বাস, স্বর, উচ্চারণ ও আবৃত্তি', 'Breath, voice, diction & recitation')],
+    ['🧘', tr(lang, `${formatNum(EXERCISES.length, lang)}টি কৌশল`, `${EXERCISES.length} techniques`), tr(lang, 'শ্বাস, স্বর, উচ্চারণ ও আবৃত্তি', 'Breath, voice, diction & recitation')],
     ['🗣️', tr(lang, 'টাং টুইস্টার', 'Tongue twisters'), tr(lang, 'যুক্তাক্ষরসহ বাংলা ও English', 'Bangla incl. conjuncts, English')],
     ['🗓️', tr(lang, 'কাস্টম রুটিন', 'Custom routines'), tr(lang, 'ধাপ যোগ, সরানো, ক্রম বদল', 'Add, remove, reorder steps')],
     ['🔊', tr(lang, 'ভয়েস গাইডেন্স', 'Voice guidance'), tr(lang, 'ধাপে ধাপে নির্দেশনা', 'Step-by-step spoken cues')],

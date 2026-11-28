@@ -304,8 +304,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <br />
           {tr(
             lang,
-            '৫০টি কণ্ঠ-কৌশল, কবিতা আবৃত্তি, লাইভ পিচ অ্যানালাইজার, রেকর্ডার ও সহজ শেয়ারিং।',
-            '50 vocal techniques, poetry recitation lab, live pitch analyzer, recorder & easy sharing.'
+            '১০০টি কণ্ঠ-কৌশল, কবিতা আবৃত্তি, লাইভ পিচ অ্যানালাইজার, রেকর্ডার ও সহজ শেয়ারিং।',
+            '100 vocal techniques, poetry recitation lab, live pitch analyzer, recorder & easy sharing.'
           )}
           <br />
           {tr(lang, 'সব তথ্য শুধু আপনার ডিভাইসে সংরক্ষিত; কোনো লগইন বা সার্ভার নেই।', 'All data stays on your device; no login or server.')}

@@ -43,6 +43,7 @@ interface StudioViewProps {
   prefill: StudioPrefill | null;
   onClearPrefill: () => void;
   onOpenPoetry: () => void;
+  onOpenPromito?: () => void;
   onToast: (msg: string) => void;
 }
 
@@ -54,6 +55,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
   prefill,
   onClearPrefill,
   onOpenPoetry,
+  onOpenPromito,
   onToast,
 }) => {
   const lang = state.lang;
@@ -1440,13 +1442,13 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <div>
           <h3 className="text-base font-bold text-[var(--tx)] m-0 flex items-center gap-2">
             <ScrollText className="w-4 h-4 text-[#ff8a4c]" />
-            <span>{tr(lang, 'কবিতা আবৃত্তি ও কঠিন শব্দ', 'Poetry recitation & difficult words')}</span>
+            <span>{tr(lang, 'আবৃত্তি ল্যাব ও পাঠশালা (১৪ অধ্যায়)', 'Abritti Lab & Curriculum (14 chapters)')}</span>
           </h3>
           <p className="text-xs sm:text-sm text-[var(--mu)] m-0 mt-1">
             {tr(
               lang,
-              '২০টি কঠিন বাংলা শব্দ: ভেঙে উচ্চারণ, একসঙ্গে বলা, শুনে অনুশীলন ও নমুনা আবৃত্তি।',
-              '20 difficult Bengali words with chunked pronunciation, audio practice and a sample recitation.'
+              'আবৃত্তি পরিচিতি, ধ্বনি ও প্রমিত উচ্চারণ, কণ্ঠ-বাগযন্ত্রের ব্যায়াম, মঞ্চ-মাইক্রোফোন কৌশল ও ৪০টি কঠিন শব্দ।',
+              'Recitation fundamentals, phonetics, standard diction, articulatory drills, stage & mic guide plus 40 words.'
             )}
           </p>
         </div>
@@ -1458,6 +1460,32 @@ export const StudioView: React.FC<StudioViewProps> = ({
           {tr(lang, 'আবৃত্তি ল্যাব খুলুন', 'Open recitation lab')}
         </button>
       </section>
+
+      {/* Promito Bangla Pronunciation Quick Card */}
+      {onOpenPromito && (
+        <section className="studio-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-bold text-[var(--tx)] m-0 flex items-center gap-2">
+              <span>🗣️</span>
+              <span>{tr(lang, 'প্রমিত বাংলা উচ্চারণ (১৪০ শব্দ)', 'Standard Bengali Pronunciation (140 words)')}</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-[var(--mu)] m-0 mt-1">
+              {tr(
+                lang,
+                '১৪০টি বহুল প্রচলিত শব্দের ভুল উচ্চারণ বনাম আবৃত্তিতে প্রমিত (শুদ্ধ) উচ্চারণ তালিকা, অডিও ও কুইজ।',
+                '140 common everyday mispronunciations vs. standard Bengali recitation forms with audio & quiz.'
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenPromito}
+            className="studio-btn-pri min-h-[46px] px-5 rounded-2xl text-sm shrink-0 cursor-pointer"
+          >
+            {tr(lang, 'উচ্চারণ তালিকা খুলুন', 'Open Diction Guide')}
+          </button>
+        </section>
+      )}
 
       {/* Diagnostics + Privacy + Safety */}
       <section className="studio-card p-5 space-y-1.5">

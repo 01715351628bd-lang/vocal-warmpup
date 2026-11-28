@@ -343,7 +343,14 @@ export const PlayerOverlay: React.FC<PlayerOverlayProps> = ({
         </div>
 
         <div className="flex items-start gap-4 my-4">
-          <ExerciseFigure exercise={ex} lang={state.lang} size="md" onZoom={onZoomImage} />
+          <ExerciseFigure
+            exercise={ex}
+            lang={state.lang}
+            size="md"
+            active={running}
+            speaking={speaking}
+            onZoom={onZoomImage}
+          />
           <div className="flex-1 min-w-0">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--tx)] leading-tight m-0">
               {state.lang === 'bn' ? ex.bn : ex.en}

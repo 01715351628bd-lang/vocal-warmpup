@@ -3,7 +3,7 @@ export type Theme = 'dark' | 'light';
 export type VoiceGender = 'any' | 'f' | 'm';
 export type BgSoundKind = 'auto' | 'ambient' | 'tanpura' | 'drone' | 'nature' | 'breath' | 'om' | 'off';
 export type ExLevel = 'B' | 'I' | 'A';
-export type AppView = 'home' | 'ex' | 'rt' | 'studio' | 'tw' | 'poetry' | 'pg' | 'set' | 'about';
+export type AppView = 'home' | 'ex' | 'rt' | 'studio' | 'promito' | 'tw' | 'poetry' | 'pg' | 'set' | 'about';
 
 export interface Exercise {
   id: string;
@@ -52,10 +52,19 @@ export interface PoetryWord {
   tip: string;
 }
 
+export interface ChallengeCycleRecord {
+  id: string;
+  startedAt?: number;
+  completedAt: number;
+  daysCompleted: number;
+}
+
 export interface Challenge7Progress {
   startedAt?: number;
   doneDays: number[];
   lastDayCompletedAt?: Record<number, number>;
+  completedCycles?: ChallengeCycleRecord[];
+  cycleArchived?: boolean;
 }
 
 export interface AppState {

@@ -1,18 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
-import { AudioLines, BarChart3, Clock, Home, Mic, Settings, X } from 'lucide-react';
+import { AudioLines, BarChart3, Clock, Home, Languages, Mic, Settings, X } from 'lucide-react';
 import { AboutView } from './components/AboutView';
+import { ExerciseFigure } from './components/ExerciseFigure';
 import { ExercisesView } from './components/ExercisesView';
 import { HomeView } from './components/HomeView';
 import { PlayerOverlay, type ActiveSession } from './components/PlayerOverlay';
 import { PoetryLabView } from './components/PoetryLabView';
 import { ProgressView } from './components/ProgressView';
+import { PromitoView } from './components/PromitoView';
 import { RoutinesView } from './components/RoutinesView';
 import { SettingsView } from './components/SettingsView';
 import { StudioView } from './components/StudioView';
 import { TongueTwistersView } from './components/TongueTwistersView';
-import { EX_IMAGES } from './data/assets';
 import { EX_MAP, ROUTINES, VALID_EX_IDS } from './data/exercises';
 import type { AppState, AppView, SessionStep, StudioPrefill } from './types/studio';
 import { subscribeVoices } from './utils/audioEngine';
@@ -150,19 +151,38 @@ export default function App() {
   const handleToggleChallengeDay = useCallback(
     (dayNum: number) => {
       setState((prev) => {
-        const current = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {} };
+        const current = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {}, completedCycles: [], cycleArchived: false };
         const exists = current.doneDays.includes(dayNum);
         const nextDays = exists
           ? current.doneDays.filter((d) => d !== dayNum)
           : [...current.doneDays, dayNum].sort((a, b) => a - b);
         const nextTimestamps = { ...(current.lastDayCompletedAt || {}) };
-        if (!exists) nextTimestamps[dayNum] = Date.now();
+        if (!exists) {
+          nextTimestamps[dayNum] = Date.now();
+        } else {
+          delete nextTimestamps[dayNum];
+        }
+        const prevCycles = current.completedCycles || [];
+        const shouldArchive = nextDays.length === 7 && !current.cycleArchived;
+        const nextCycles = shouldArchive
+          ? [
+              {
+                id: `${Date.now()}-${prevCycles.length + 1}`,
+                startedAt: current.startedAt || Date.now(),
+                completedAt: Date.now(),
+                daysCompleted: 7,
+              },
+              ...prevCycles,
+            ].slice(0, 30)
+          : prevCycles;
         return {
           ...prev,
           challenge7: {
             startedAt: current.startedAt || Date.now(),
             doneDays: nextDays,
             lastDayCompletedAt: nextTimestamps,
+            completedCycles: nextCycles,
+            cycleArchived: shouldArchive ? true : current.cycleArchived,
           },
         };
       });
@@ -173,9 +193,14 @@ export default function App() {
   const handleResetChallenge = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      challenge7: { doneDays: [], lastDayCompletedAt: {} },
+      challenge7: {
+        doneDays: [],
+        lastDayCompletedAt: {},
+        completedCycles: prev.challenge7?.completedCycles || [],
+        cycleArchived: false,
+      },
     }));
-    showToast(tr(state.lang, '৭ দিনের চ্যালেঞ্জ রিসেট হয়েছে', '7-day challenge reset'));
+    showToast(tr(state.lang, 'নতুন ৭ দিনের চ্যালেঞ্জ শুরু হয়েছে', 'New 7-day challenge cycle ready'));
   }, [showToast, state.lang]);
 
   const startRoutineById = useCallback(
@@ -202,10 +227,23 @@ export default function App() {
       setState((prev) => {
         let nextChallenge = prev.challenge7;
         if (challengeDay !== null) {
-          const curC = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {} };
+          const curC = prev.challenge7 || { doneDays: [], lastDayCompletedAt: {}, completedCycles: [], cycleArchived: false };
           const nextDone = curC.doneDays.includes(challengeDay)
             ? curC.doneDays
             : [...curC.doneDays, challengeDay].sort((a, b) => a - b);
+          const prevCycles = curC.completedCycles || [];
+          const shouldArchive = nextDone.length === 7 && !curC.cycleArchived;
+          const nextCycles = shouldArchive
+            ? [
+                {
+                  id: `${Date.now()}-${prevCycles.length + 1}`,
+                  startedAt: curC.startedAt || Date.now(),
+                  completedAt: Date.now(),
+                  daysCompleted: 7,
+                },
+                ...prevCycles,
+              ].slice(0, 30)
+            : prevCycles;
           nextChallenge = {
             startedAt: curC.startedAt || Date.now(),
             doneDays: nextDone,
@@ -213,6 +251,8 @@ export default function App() {
               ...(curC.lastDayCompletedAt || {}),
               [challengeDay]: Date.now(),
             },
+            completedCycles: nextCycles,
+            cycleArchived: shouldArchive ? true : curC.cycleArchived,
           };
         }
         return {
@@ -298,6 +338,7 @@ export default function App() {
     { id: 'ex', label: tr(lang, 'অনুশীলন', 'Exercises'), icon: <AudioLines className="w-5 h-5" /> },
     { id: 'rt', label: tr(lang, 'রুটিন', 'Routine'), icon: <Clock className="w-5 h-5" /> },
     { id: 'studio', label: tr(lang, 'স্টুডিও', 'Studio'), icon: <Mic className="w-5 h-5" /> },
+    { id: 'promito', label: tr(lang, 'প্রমিত উচ্চারণ', 'Diction'), icon: <Languages className="w-5 h-5" /> },
     { id: 'pg', label: tr(lang, 'অগ্রগতি', 'Progress'), icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'set', label: tr(lang, 'সেটিংস', 'Settings'), icon: <Settings className="w-5 h-5" /> },
   ];
@@ -308,7 +349,6 @@ export default function App() {
     (view === 'about' && id === 'set');
 
   const zoomEx = zoomExId ? EX_MAP[zoomExId] : null;
-  const zoomImg = zoomExId ? EX_IMAGES[zoomExId] : null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -366,7 +406,16 @@ export default function App() {
             prefill={studioPrefill}
             onClearPrefill={() => setStudioPrefill(null)}
             onOpenPoetry={() => navigate('poetry')}
+            onOpenPromito={() => navigate('promito')}
             onToast={showToast}
+          />
+        )}
+
+        {view === 'promito' && (
+          <PromitoView
+            state={state}
+            onBack={() => navigate('studio')}
+            onRecordPrompt={handleRecordPromptInStudio}
           />
         )}
 
@@ -390,7 +439,14 @@ export default function App() {
           />
         )}
 
-        {view === 'pg' && <ProgressView state={state} />}
+        {view === 'pg' && (
+          <ProgressView
+            state={state}
+            onStartChallengeDay={handleStartChallengeDay}
+            onToggleChallengeDay={handleToggleChallengeDay}
+            onResetChallenge={handleResetChallenge}
+          />
+        )}
 
         {view === 'set' && (
           <SettingsView
@@ -410,7 +466,7 @@ export default function App() {
       {/* Floating Bottom Navigation */}
       <nav
         aria-label={tr(lang, 'মূল নেভিগেশন', 'Main navigation')}
-        className="fixed left-1/2 -translate-x-1/2 bottom-[calc(10px+env(safe-area-inset-bottom))] w-[min(640px,calc(100%-20px))] z-40 flex gap-1 p-1.5 rounded-[26px] border border-[var(--bd)] shadow-2xl"
+        className="fixed left-1/2 -translate-x-1/2 bottom-[calc(10px+env(safe-area-inset-bottom))] w-[min(690px,calc(100%-16px))] z-40 flex gap-0.5 sm:gap-1 p-1.5 rounded-[26px] border border-[var(--bd)] shadow-2xl"
         style={{
           background: 'color-mix(in srgb, var(--card) 84%, transparent)',
           backdropFilter: 'blur(20px) saturate(1.5)',
@@ -425,7 +481,7 @@ export default function App() {
               type="button"
               onClick={() => navigate(item.id)}
               aria-current={active ? 'page' : undefined}
-              className={`flex-1 min-h-[54px] min-w-0 border-0 rounded-[20px] flex flex-col items-center justify-center gap-0.5 text-[10px] sm:text-[11px] px-1 cursor-pointer transition-all ${
+              className={`flex-1 min-h-[54px] min-w-0 border-0 rounded-[20px] flex flex-col items-center justify-center gap-0.5 text-[9.5px] sm:text-[11px] px-0.5 sm:px-1 cursor-pointer transition-all ${
                 active
                   ? 'studio-btn-pri font-bold'
                   : 'bg-transparent text-[var(--mu)] hover:text-[var(--tx)] font-medium'
@@ -455,29 +511,27 @@ export default function App() {
       )}
 
       {/* Illustration Lightbox */}
-      {zoomEx && zoomImg && (
+      {zoomEx && (
         <div
-          className="fixed inset-0 z-[70] bg-[#050812]/92 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-4"
+          className="fixed inset-0 z-[70] bg-[#050812]/92 backdrop-blur-md flex flex-col items-center justify-center gap-4 p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setZoomExId(null)}
         >
-          <img
-            src={zoomImg}
-            alt={lang === 'bn' ? zoomEx.bn : zoomEx.en}
-            className="max-w-full max-h-[76vh] rounded-2xl shadow-2xl"
-          />
-          <p className="text-[#eef0fb] font-semibold text-center m-0 text-sm sm:text-base">
-            {lang === 'bn' ? zoomEx.bn : zoomEx.en} · {lang === 'bn' ? zoomEx.en : zoomEx.bn}
-          </p>
-          <button
-            type="button"
-            onClick={() => setZoomExId(null)}
-            className="studio-btn-pri min-h-[46px] px-6 rounded-2xl inline-flex items-center gap-2 text-sm cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-            <span>{tr(lang, 'বন্ধ করুন', 'Close')}</span>
-          </button>
+          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-3">
+            <ExerciseFigure exercise={zoomEx} lang={lang} size="lg" />
+            <p className="text-[#eef0fb] font-semibold text-center m-0 text-sm sm:text-base">
+              {lang === 'bn' ? zoomEx.bn : zoomEx.en} · {lang === 'bn' ? zoomEx.en : zoomEx.bn}
+            </p>
+            <button
+              type="button"
+              onClick={() => setZoomExId(null)}
+              className="studio-btn-pri min-h-[46px] px-6 rounded-2xl inline-flex items-center gap-2 text-sm cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span>{tr(lang, 'বন্ধ করুন', 'Close')}</span>
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronRight, Play, RotateCw, ScrollText, Sparkles } from 'lucide-react';
-import { CATS, CAT_EMOJI, QUOTES, ROUTINES, TW } from '../data/exercises';
+import { CATS, CAT_EMOJI, EXERCISES, QUOTES, ROUTINES, TW } from '../data/exercises';
 import type { AppState, SessionStep, StudioPrefill } from '../types/studio';
 import { formatNum, getStreak, todayMin, totalMin, tr } from '../utils/storage';
 import { Challenge7Card } from './Challenge7Card';
@@ -321,13 +321,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div>
             <h3 className="text-base font-bold text-[var(--tx)] m-0 flex items-center gap-2">
               <ScrollText className="w-4 h-4 text-[#ff8a4c]" />
-              <span>{tr(lang, 'কবিতা আবৃত্তি ল্যাব', 'Poetry diction lab')}</span>
+              <span>{tr(lang, 'আবৃত্তি ল্যাব ও পাঠশালা', 'Abritti Lab & Poetry Diction')}</span>
             </h3>
             <p className="text-sm text-[var(--mu)] mt-2">
               {tr(
                 lang,
-                '২০টি কঠিন বাংলা শব্দ ভেঙে উচ্চারণ, শুনে অনুশীলন ও সরাসরি রেকর্ডিং।',
-                '20 difficult Bengali words with chunked cues, audio playback, and direct recording.'
+                '১৪টি আবৃত্তি অধ্যায় (ধ্বনি, প্রমিত উচ্চারণ, বাগযন্ত্র, মঞ্চকৌশল) ও ৪০টি কঠিন শব্দ অনুশীলন।',
+                '14 recitation chapters (phonetics, diction, stagecraft) plus 40 difficult poetry word drills.'
               )}
             </p>
           </div>
@@ -344,7 +344,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Quick Categories */}
       <section className="space-y-2">
         <h3 className="text-base font-bold text-[var(--tx)] m-0">
-          {tr(lang, 'দ্রুত বিভাগ (৫০টি কৌশল)', 'Quick categories (50 techniques)')}
+          {tr(
+            lang,
+            `দ্রুত বিভাগ (${formatNum(EXERCISES.length, lang)}টি কৌশল)`,
+            `Quick categories (${EXERCISES.length} techniques)`
+          )}
         </h3>
         <div className="flex flex-wrap gap-2">
           {Object.keys(CATS).map((key) => (

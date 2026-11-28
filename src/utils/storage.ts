@@ -27,7 +27,7 @@ export function defState(): AppState {
     rd: {},
     last: null,
     tw: { fav: [], done: {} },
-    challenge7: { doneDays: [], lastDayCompletedAt: {} },
+    challenge7: { doneDays: [], lastDayCompletedAt: {}, completedCycles: [], cycleArchived: false },
   };
 }
 
@@ -42,6 +42,8 @@ export function loadState(): AppState {
         challenge7: {
           doneDays: [],
           lastDayCompletedAt: {},
+          completedCycles: [],
+          cycleArchived: false,
           ...(parsed.challenge7 || {}),
         },
       };

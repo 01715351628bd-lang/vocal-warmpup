@@ -73,10 +73,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
         <div className="studio-card-conj p-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm sm:text-base font-bold text-[var(--tx)] m-0">
-              📜 {tr(lang, 'কবিতা আবৃত্তি: কঠিন শব্দ', 'Poetry diction lab')}
+              📜 {tr(lang, 'আবৃত্তি ল্যাব (১৪ অধ্যায় · ৪০ শব্দ)', 'Abritti Lab (14 ch · 40 words)')}
             </h3>
             <p className="text-xs text-[var(--mu)] m-0 mt-0.5">
-              {tr(lang, '২০টি কঠিন শব্দ ভেঙে ও জুড়ে অনুশীলন', '20 challenging Bengali words & recitation drill')}
+              {tr(lang, 'আবৃত্তি তত্ত্ব, প্রমিত উচ্চারণ, ব্যায়াম, মঞ্চকৌশল ও কঠিন শব্দ', 'Theory, standard diction, vocal organs, stagecraft & word drills')}
             </p>
           </div>
           <button
@@ -96,7 +96,11 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr(lang, '৫০টি কৌশলের মধ্যে খুঁজুন…', 'Search among 50 techniques…')}
+          placeholder={tr(
+            lang,
+            `${formatNum(EXERCISES.length, lang)}টি কৌশলের মধ্যে খুঁজুন…`,
+            `Search among ${EXERCISES.length} techniques…`
+          )}
           aria-label="search"
           className="w-full min-h-[48px] rounded-2xl border border-[var(--bd)] bg-[var(--bg2)] pl-10 pr-4 text-sm text-[var(--tx)]"
         />

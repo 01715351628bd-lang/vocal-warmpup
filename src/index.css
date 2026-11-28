@@ -211,6 +211,310 @@ input[type="range"].studio-range::-webkit-slider-thumb {
   animation: breatheGlow 5s ease-in-out infinite;
 }
 
+/* Vocal Posture & Expression ("বাচনভঙ্গি") Keyframes */
+@keyframes postureBreathe {
+  0%, 100% {
+    transform: scale(1.03) translateY(1.5px);
+  }
+  45% {
+    transform: scale(1.075) translateY(-3px);
+  }
+  58% {
+    transform: scale(1.072) translateY(-2.5px);
+  }
+}
+
+@keyframes postureSerene {
+  0%, 100% {
+    transform: scale(1.03) translateY(1px);
+  }
+  50% {
+    transform: scale(1.06) translateY(-3.5px);
+  }
+}
+
+@keyframes postureHum {
+  0%, 100% {
+    transform: scale(1.03) translateY(0);
+  }
+  25% {
+    transform: scale(1.048) translate(-0.6px, -1.2px);
+  }
+  50% {
+    transform: scale(1.052) translate(0.6px, -1.8px);
+  }
+  75% {
+    transform: scale(1.045) translate(-0.4px, -1px);
+  }
+}
+
+@keyframes postureTrill {
+  0%, 100% {
+    transform: scale(1.03) translate3d(0, 1px, 0);
+  }
+  20% {
+    transform: scale(1.055) translate3d(0, -1.5px, 0);
+  }
+  24% {
+    transform: scale(1.058) translate3d(-1px, -1.8px, 0);
+  }
+  28% {
+    transform: scale(1.058) translate3d(1px, -1.3px, 0);
+  }
+  32% {
+    transform: scale(1.058) translate3d(-0.9px, -1.8px, 0);
+  }
+  36% {
+    transform: scale(1.058) translate3d(0.9px, -1.3px, 0);
+  }
+  40% {
+    transform: scale(1.058) translate3d(-0.7px, -1.7px, 0);
+  }
+  44% {
+    transform: scale(1.058) translate3d(0.7px, -1.4px, 0);
+  }
+  48% {
+    transform: scale(1.055) translate3d(0, -1.5px, 0);
+  }
+  72% {
+    transform: scale(1.035) translate3d(0, 0.5px, 0);
+  }
+}
+
+@keyframes postureArticulate {
+  0%, 100% {
+    transform: scale(1.03) translateY(0.5px);
+  }
+  18% {
+    transform: scale(1.055) translateY(-2px);
+  }
+  34% {
+    transform: scale(1.04) translateY(0px);
+  }
+  52% {
+    transform: scale(1.062) translateY(-2.5px);
+  }
+  70% {
+    transform: scale(1.042) translateY(-0.5px);
+  }
+  84% {
+    transform: scale(1.05) translateY(-1.5px);
+  }
+}
+
+@keyframes posturePitch {
+  0%, 100% {
+    transform: scale(1.03) translateY(2.5px);
+  }
+  48% {
+    transform: scale(1.065) translateY(-4.5px);
+  }
+}
+
+@keyframes postureProject {
+  0%, 100% {
+    transform: scale(1.03) translate3d(-1px, 1px, 0);
+  }
+  40% {
+    transform: scale(1.075) translate3d(2px, -2.5px, 0);
+  }
+  65% {
+    transform: scale(1.065) translate3d(1.5px, -2px, 0);
+  }
+}
+
+@keyframes postureCalm {
+  0%, 100% {
+    transform: scale(1.03) translateY(-2px);
+  }
+  50% {
+    transform: scale(1.05) translateY(2px);
+  }
+}
+
+@keyframes resonanceRipple {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.78;
+  }
+  70% {
+    opacity: 0.28;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+@keyframes projArc {
+  0% {
+    transform: translateX(-5px) scale(0.76);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(13px) scale(1.22);
+    opacity: 0;
+  }
+}
+
+@keyframes auraRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+@keyframes syllableBeat {
+  0%, 100% {
+    transform: scaleY(0.35);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scaleY(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes pitchOrbTravel {
+  0%, 100% {
+    transform: translate3d(0px, 10px, 0) scale(0.88);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate3d(38px, -12px, 0) scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes trillAirFlutter {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scaleX(0.92);
+    opacity: 0.25;
+  }
+  15%, 35%, 55% {
+    transform: translate3d(2px, -1.5px, 0) scaleX(1.06);
+    opacity: 0.9;
+  }
+  25%, 45%, 65% {
+    transform: translate3d(-1px, 1.5px, 0) scaleX(0.98);
+    opacity: 0.75;
+  }
+  80% {
+    transform: translate3d(0, 0, 0) scaleX(0.9);
+    opacity: 0.2;
+  }
+}
+
+.anim-posture-breath {
+  animation: postureBreathe 4.8s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-serene {
+  animation: postureSerene 5.2s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-hum {
+  animation: postureHum 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-trill {
+  animation: postureTrill 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-articulate {
+  animation: postureArticulate 2.9s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-pitch {
+  animation: posturePitch 4.2s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-project {
+  animation: postureProject 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+.anim-posture-calm {
+  animation: postureCalm 5.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.anim-ripple-1 {
+  transform-origin: center;
+  animation: resonanceRipple 3.2s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+.anim-ripple-2 {
+  transform-origin: center;
+  animation: resonanceRipple 3.2s cubic-bezier(0.22, 0.61, 0.36, 1) 1.05s infinite;
+}
+.anim-ripple-3 {
+  transform-origin: center;
+  animation: resonanceRipple 3.2s cubic-bezier(0.22, 0.61, 0.36, 1) 2.1s infinite;
+}
+
+.anim-proj-1 {
+  transform-origin: center;
+  animation: projArc 2.4s ease-out infinite;
+}
+.anim-proj-2 {
+  transform-origin: center;
+  animation: projArc 2.4s ease-out 0.6s infinite;
+}
+.anim-proj-3 {
+  transform-origin: center;
+  animation: projArc 2.4s ease-out 1.2s infinite;
+}
+
+.anim-aura-spin {
+  transform-origin: center;
+  animation: auraRotate 18s linear infinite;
+}
+
+.anim-flow-dash {
+  stroke-dasharray: 8 8;
+  animation: flowDash 2.6s linear infinite;
+}
+
+.anim-syllable-1 {
+  transform-origin: bottom;
+  animation: syllableBeat 1.5s ease-in-out 0s infinite;
+}
+.anim-syllable-2 {
+  transform-origin: bottom;
+  animation: syllableBeat 1.5s ease-in-out 0.22s infinite;
+}
+.anim-syllable-3 {
+  transform-origin: bottom;
+  animation: syllableBeat 1.5s ease-in-out 0.44s infinite;
+}
+.anim-syllable-4 {
+  transform-origin: bottom;
+  animation: syllableBeat 1.5s ease-in-out 0.66s infinite;
+}
+
+.anim-pitch-orb {
+  animation: pitchOrbTravel 4.2s ease-in-out infinite;
+}
+
+.anim-trill-air {
+  animation: trillAirFlutter 3.4s ease-in-out infinite;
+}
+
+.anim-paused,
+.anim-paused * {
+  animation-play-state: paused !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation: none !important;

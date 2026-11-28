@@ -1,13 +1,29 @@
 import React from 'react';
-import type { AppState } from '../types/studio';
+import type { AppState, SessionStep } from '../types/studio';
 import { dk, formatNum, getStreak, todayMin, totalMin, tr } from '../utils/storage';
+import { ChallengeTrackerSection } from './ChallengeTrackerSection';
 
-export const ProgressView: React.FC<{ state: AppState }> = ({ state }) => {
+interface ProgressViewProps {
+  state: AppState;
+  onStartChallengeDay: (dayNum: number, steps: SessionStep[], title: string) => void;
+  onToggleChallengeDay: (dayNum: number) => void;
+  onResetChallenge: () => void;
+}
+
+export const ProgressView: React.FC<ProgressViewProps> = ({
+  state,
+  onStartChallengeDay,
+  onToggleChallengeDay,
+  onResetChallenge,
+}) => {
   const lang = state.lang;
   const loc = lang === 'bn' ? 'bn-BD' : 'en-US';
   const tm = todayMin(state);
   const tot = totalMin(state);
   const st = getStreak(state);
+  const challengeDone =
+    (state.challenge7?.doneDays?.length || 0) === 7 ||
+    (state.challenge7?.completedCycles?.length || 0) > 0;
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -29,8 +45,9 @@ export const ProgressView: React.FC<{ state: AppState }> = ({ state }) => {
     [state.sessions >= 1, '🎤', tr(lang, 'প্রথম সেশন', 'First session')],
     [st >= 3, '🔥', tr(lang, '৩ দিনের ধারা', '3-day streak')],
     [st >= 7, '⚡', tr(lang, '৭ দিনের ধারা', '7-day streak')],
+    [challengeDone, '🏅', tr(lang, '৭ দিনের চ্যালেঞ্জ জয়', '7-day challenge')],
     [tot >= 60, '⏳', tr(lang, '১ ঘণ্টা অনুশীলন', '1 hour practiced')],
-    [state.sessions >= 10, '🏅', tr(lang, '১০ সেশন', '10 sessions')],
+    [state.sessions >= 10, '🌟', tr(lang, '১০ সেশন', '10 sessions')],
     [tot >= 300, '🏆', tr(lang, '৫ ঘণ্টা অনুশীলন', '5 hours practiced')],
   ];
 
@@ -64,6 +81,14 @@ export const ProgressView: React.FC<{ state: AppState }> = ({ state }) => {
           </div>
         ))}
       </div>
+
+      {/* 7-Day Challenge Tracker & Daily Goal Status */}
+      <ChallengeTrackerSection
+        state={state}
+        onStartChallengeDay={onStartChallengeDay}
+        onToggleChallengeDay={onToggleChallengeDay}
+        onResetChallenge={onResetChallenge}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 7-day bar chart */}
